@@ -1,0 +1,9 @@
+#ifndef GOL_CONFIG_H
+#define GOL_CONFIG_H
+
+#define gol_VERSION_MAJOR @gol_VERSION_MAJOR@
+#define gol_VERSION_MINOR @gol_VERSION_MINOR@
+#define gol_VERSION_PATCH @gol_VERSION_PATCH@
+#define gol_VERSION_TWEAK @gol_VERSION_TWEAK@
+
+#endif

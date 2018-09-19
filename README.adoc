@@ -1,0 +1,47 @@
+= About
+
+AStyle::
+
+Set the `ARTISTIC_STYLE_PROJECT_OPTIONS` environment variable to `.astylerc` for project-specific options to be picked up by default.
+
+CMake::
+To be able to properly import `freeglut` on Windows for release and debug configurations as well https://gitlab.kitware.com/kohanyi.robert/cmake/blob/findglutd-msvc/Modules/FindGLUT.cmake#L39[CMake's `FindGLUT` module needs to be updated].
+Also, for all build set `CMAKE_INSTALL_PREFIX` to `%USERPROFILE%` or something else that make sense.
+Maybe setting `CMAKE_PREFIX_PATH` to `%USERPROFILE%` as well is necessary sometimes if `freeglut` or `glew` cannot be found during configuration.
+
+GLUT::
+Using Visual Studio Express 2017 compile `freeglut` on Windows like this
+
+```
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=%USERPROFILE% -DFREEGLUT_BUILD_DEMOS=OFF -DFREEGLUT_BUILD_STATIC_LIBS=OFF ..
+cmake --build . --target INSTALL --config Debug
+cmake --build . --target INSTALL --config Release
+```
+
+This installs includes, shared libraries and binaries into `%USERPROFILE%\{include,lib,bin}` respectively.
+
+GLEW::
+Same goes for `glew` as well.
+
+```
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=%USERPROFILE% ../build/cmake
+cmake --build . --target INSTALL --config Debug
+cmake --build . --target INSTALL --config Release
+```
+
+Game of Life::
+
+Using `clang` for this
+
+```
+cmake -T LLVM-vs2014 -DCMAKE_INSTALL_PREFIX=%USERPROFILE% ..
+cmake --build . --config Debug
+cmake --build . --config Release
+```
+
+If `%USERPROFILE%\bin` is added to `PATH` then the installed program can be executed simply by `gol`.
+Otherwise run `.\Debug\gol.exe` or `.\Release\gol.exe`.

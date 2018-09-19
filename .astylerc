@@ -1,0 +1,8 @@
+--style=kr
+--indent=spaces=4
+--mode=c
+--align-pointer=middle
+--convert-tabs
+--max-code-length=80
+--suffix=none
+--lineend=linux
