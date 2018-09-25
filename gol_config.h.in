@@ -6,4 +6,6 @@
 #define gol_VERSION_PATCH @gol_VERSION_PATCH@
 #define gol_VERSION_TWEAK @gol_VERSION_TWEAK@
 
+#define gol_VERSION "@gol_VERSION@"
+
 #endif

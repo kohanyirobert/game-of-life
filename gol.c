@@ -1,136 +1,87 @@
 #include <stdlib.h>
-#include <stdio.h>
-#include <GL/glew.h>
-#include <GL/freeglut.h>
-#include "gol_config.h"
+#include <time.h>
+#include "gol.h"
 
-#define WINDOW_TITLE_PREFIX "Game of Life"
-#define WINDOW_TITLE_FORMAT (WINDOW_TITLE_PREFIX " (%u FPS)")
-
-int current_width = 500;
-int current_height = 500;
-int window_handle = 0;
-unsigned frame_count = 0;
-
-void initialize(int, char * []);
-void init_window(int, char * []);
-void resize_function(const int, const int);
-void render_function(void);
-void timer_function(const int);
-void idle_function(void);
-
-int main(int argc, char * argv[argc])
+void tick_cell(size_t n,
+               size_t i,
+               size_t j,
+               uint8_t grid[n][n],
+               uint8_t buff[n][n])
 {
-    initialize(argc, argv);
+    size_t iu = i - 1;
+    size_t id = i + 1;
+    size_t jl = j - 1;
+    size_t jr = j + 1;
 
-    glutMainLoop();
+    uint8_t u = iu >= 0 ? grid[iu][j] : -1;
+    uint8_t l = jl >= 0 ? grid[i][jl] : -1;
+    uint8_t r = jr < n ? grid[i][jr] : -1;
+    uint8_t d = id < n ? grid[id][j] : -1;
 
-    return EXIT_SUCCESS;
-}
+    uint8_t ul = iu >= 0 && jl >= 0 ? grid[iu][jl] : -1;
+    uint8_t ur = iu >= 0 && jr < n ? grid[iu][jr] : -1;
+    uint8_t dl = id < n && jl >= 0 ? grid[id][jl] : -1;
+    uint8_t dr = id < n && jr < n ? grid[id][jr] : -1;
 
-void initialize(int argc, char * argv[argc])
-{
-    printf(
-        "INFO: Project version: %d.%d.%d.%d\n",
-        gol_VERSION_MAJOR,
-        gol_VERSION_MINOR,
-        gol_VERSION_PATCH,
-        gol_VERSION_TWEAK
-    );
-
-    GLenum result;
-
-    init_window(argc, argv);
-
-    result = glewInit();
-
-    if (GLEW_OK != result) {
-        fprintf(
-            stderr,
-            "ERROR: %s\n",
-            glewGetErrorString(result)
-        );
-        exit(EXIT_FAILURE);
+    unsigned lc = 0;
+    if (u == 1) {
+        ++lc;
+    }
+    if (l == 1) {
+        ++lc;
+    }
+    if (r == 1) {
+        ++lc;
+    }
+    if (d == 1) {
+        ++lc;
+    }
+    if (ul == 1) {
+        ++lc;
+    }
+    if (ur == 1) {
+        ++lc;
+    }
+    if (dl == 1) {
+        ++lc;
+    }
+    if (dr == 1) {
+        ++lc;
     }
 
-    printf(
-        "INFO: OpenGL version: %s\n",
-        glGetString(GL_VERSION)
-    );
-
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-}
-
-void init_window(int argc, char * argv[argc])
-{
-    glutInit(&argc, argv);
-
-    glutInitContextVersion(4, 0);
-    glutInitContextFlags(GLUT_FORWARD_COMPATIBLE);
-    glutInitContextProfile(GLUT_CORE_PROFILE);
-
-    glutSetOption(
-        GLUT_ACTION_ON_WINDOW_CLOSE,
-        GLUT_ACTION_GLUTMAINLOOP_RETURNS
-    );
-
-    glutInitWindowSize(current_width, current_height);
-
-    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-
-    window_handle = glutCreateWindow(WINDOW_TITLE_PREFIX);
-
-    if (window_handle <= 0) {
-        fprintf(
-            stderr,
-            "ERROR: Could not create a new rendering window.\n"
-        );
-        exit(EXIT_FAILURE);
+    uint8_t cell = grid[i][j];
+    if (cell == 0) {
+        if (lc == 3) {
+            buff[i][j] = 1;
+        } else {
+            buff[i][j] = 0;
+        }
+    } else if (cell == 1) {
+        if (lc < 2) {
+            buff[i][j] = 0;
+        } else if (lc == 2 || lc == 3) {
+            buff[i][j] = 1;
+        } else {
+            buff[i][j] = 0;
+        }
     }
-
-    glutReshapeFunc(resize_function);
-    glutDisplayFunc(render_function);
-    glutIdleFunc(idle_function);
-    glutTimerFunc(0, timer_function, 0);
 }
 
-void resize_function(const int width, const int height)
+void gol_seed(size_t n, uint8_t grid[n][n])
 {
-    current_width = width;
-    current_height = height;
-    glViewport(0, 0, current_width, current_height);
-}
-
-void render_function(void)
-{
-    ++frame_count;
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glutSwapBuffers();
-    glutPostRedisplay();
-}
-
-void idle_function(void)
-{
-    glutPostRedisplay();
-}
-
-void timer_function(const int timer_id)
-{
-    if (0 == glutGetWindow()) {
-        return;
+    srand(time(NULL));
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            grid[i][j] = rand() % 2;
+        }
     }
+}
 
-    if (1 == timer_id) {
-        unsigned fps = frame_count;
-        int size = snprintf(NULL, 0, WINDOW_TITLE_FORMAT, fps);
-        char * buffer = malloc((size + 1) * sizeof (char *));
-        sprintf_s(buffer, size + 1, WINDOW_TITLE_FORMAT, fps);
-        glutSetWindowTitle(buffer);
-        free(buffer);
-    } else {
-        glutSetWindowTitle(WINDOW_TITLE_PREFIX);
+void gol_next(size_t n, uint8_t grid[n][n], uint8_t buff[n][n])
+{
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            tick_cell(n, i, j, grid, buff);
+        }
     }
-
-    frame_count = 0;
-    glutTimerFunc(1000, timer_function, 1);
 }
